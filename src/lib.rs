@@ -28,7 +28,13 @@ impl Cpu {
     }
 
     fn fetch(&self) -> u32 {
-        todo!("fetch");
+        let pc = self.pc as usize;
+        let b0 = self.memory[pc] as u32;
+        let b1 = self.memory[pc + 1] as u32;
+        let b2 = self.memory[pc + 2] as u32;
+        let b3 = self.memory[pc + 3] as u32;
+
+        b3 << 24 | b2 << 16 | b1 << 8 | b0
     }
 
     fn decode_and_execute(&mut self, instruction: u32) {
