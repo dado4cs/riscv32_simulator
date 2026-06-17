@@ -38,7 +38,55 @@ impl Cpu {
     }
 
     fn decode_and_execute(&mut self, instruction: u32) {
-        todo!("decode");
+        let op = instruction & 0x7F;
+        let rd = ((instruction >> 7) & 0x1F) as usize;
+        let rs1 = ((instruction >> 15) & 0x1F) as usize;
+        let rs2 = ((instruction >> 20) & 0x1F) as usize;
+        let funct3 = ((instruction >> 12) & 0x7) as u8;
+        let funct7 = ((instruction >> 25) & 0x7F) as u8;
+
+        match op {
+            3 => {}
+            19 => {}
+            23 => {}
+            35 => {}
+            // R-type
+            51 => match funct3 {
+                0b000 => match funct7 {
+                    // add
+                    0x0 => self.registers[rd] = self.registers[rs1].wrapping_add(self.registers[rs2]),
+                    // sub
+                    0x20 => self.registers[rd] = self.registers[rs1].wrapping_sub(self.registers[rs2]),
+
+                    _ => {}
+                },
+                // sll
+                0b001 => self.registers[rd] = self.registers[rs1] << (self.registers[rs2] & 0x1F),
+                // slt
+                0b010 => self.registers[rd] = ((self.registers[rs1] as i32)< (self.registers[rs2] as i32)) as u32,
+                // sltu
+                0b011 => self.registers[rd] = (self.registers[rs1] < self.registers[rs2]) as u32,
+                // xor
+                0b100 => self.registers[rd] = self.registers[rs1] ^ self.registers[rs2],
+                0b101 => match funct7 {
+                    // srl
+                    0x0 => self.registers[rd] = self.registers[rs1] >> (self.registers[rs2] & 0x1F),
+                    // sra
+                    0x20 => self.registers[rd] = ((self.registers[rs1] as i32) >> (self.registers[rs2] & 0x1F)) as u32,
+                    _ => {}
+                    }
+                // or
+                0b110 => self.registers[rd] = self.registers[rs1] | self.registers[rs2],
+                // and
+                0b111 => self.registers[rd] = self.registers[rs1] & self.registers[rs2],
+                _ => {}
+                },  
+            99 => {}
+            103 => {}
+            111 => {}
+            _ => {}
+        }
+        self.registers[0] = 0;
     }
 
     fn memory_save(&mut self, address: u32, value: u32, save_type: u8) {
