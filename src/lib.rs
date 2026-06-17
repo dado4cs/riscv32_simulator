@@ -47,7 +47,34 @@ impl Cpu {
 
         match op {
             3 => {}
-            19 => {}
+            // I-type
+            19 => {
+                let imm = ((instruction as i32) >> 20) as u32;
+                match funct3 {
+                    // addi
+                    0b000 => self.registers[rd] = self.registers[rs1].wrapping_add(imm),
+                    // slli
+                    0b001 => self.registers[rd] = self.registers[rs1] << (imm & 0x1F),
+                    // slti
+                    0b010 => self.registers[rd] = ((self.registers[rs1] as i32) < (imm as i32)) as u32,
+                    // sltiu
+                    0b011 => self.registers[rd] = (self.registers[rs1] < imm) as u32,
+                    // xori
+                    0b100 => self.registers[rd] = self.registers[rs1] ^ imm,
+                    0b101 => match funct7 {
+                        //srli
+                        0x0 => self.registers[rd] = self.registers[rs1] >> (imm & 0x1F),
+                        // srai
+                        0x20 => self.registers[rd] = ((self.registers[rs1] as i32) >> (imm & 0x1F)) as u32,
+                        _ => {todo!("Unknown instruction")}
+                    }
+                    // ori
+                    0b110 => self.registers[rd] = self.registers[rs1] | imm,
+                    // andi
+                    0b111 => self.registers[rd] = self.registers[rs1] & imm,
+                    _ => {todo!("Unknown instruction")}
+                }
+            }
             23 => {}
             35 => {}
             // R-type
@@ -58,7 +85,7 @@ impl Cpu {
                     // sub
                     0x20 => self.registers[rd] = self.registers[rs1].wrapping_sub(self.registers[rs2]),
 
-                    _ => {}
+                    _ => {todo!("Unknown instruction")}
                 },
                 // sll
                 0b001 => self.registers[rd] = self.registers[rs1] << (self.registers[rs2] & 0x1F),
@@ -73,18 +100,18 @@ impl Cpu {
                     0x0 => self.registers[rd] = self.registers[rs1] >> (self.registers[rs2] & 0x1F),
                     // sra
                     0x20 => self.registers[rd] = ((self.registers[rs1] as i32) >> (self.registers[rs2] & 0x1F)) as u32,
-                    _ => {}
+                    _ => {todo!("Unknown instruction")}
                     }
                 // or
                 0b110 => self.registers[rd] = self.registers[rs1] | self.registers[rs2],
                 // and
                 0b111 => self.registers[rd] = self.registers[rs1] & self.registers[rs2],
-                _ => {}
+                _ => {todo!("Unknown instruction")}
                 },  
             99 => {}
             103 => {}
             111 => {}
-            _ => {}
+            _ => {todo!("Unknown instruction")}
         }
         self.registers[0] = 0;
     }
