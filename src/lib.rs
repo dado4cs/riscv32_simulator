@@ -75,7 +75,11 @@ impl Cpu {
                     _ => {todo!("Unknown instruction")}
                 }
             }
-            23 => {}
+            // auipc
+            23 => {
+                let imm = instruction & 0xFFFFF000;
+                self.registers[rd] = imm + self.pc;
+            }
             35 => {}
             // R-type
             51 => match funct3 {
@@ -108,6 +112,11 @@ impl Cpu {
                 0b111 => self.registers[rd] = self.registers[rs1] & self.registers[rs2],
                 _ => {todo!("Unknown instruction")}
                 },  
+            // lui
+            55 => {
+                let imm = instruction & 0xFFFFF000;
+                self.registers[rd] = imm;
+            }
             99 => {}
             103 => {}
             111 => {}
