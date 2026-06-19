@@ -44,6 +44,7 @@ impl Cpu {
         let rs2 = ((instruction >> 20) & 0x1F) as usize;
         let funct3 = ((instruction >> 12) & 0x7) as u8;
         let funct7 = ((instruction >> 25) & 0x7F) as u8;
+        let mut next_pc = self.pc + 4;
 
         match op {
             3 => {}
@@ -117,12 +118,42 @@ impl Cpu {
                 let imm = instruction & 0xFFFFF000;
                 self.registers[rd] = imm;
             }
-            99 => {}
+            // B-type
+            99 => {
+                let immb12 = instruction & 0x80000000;
+                let immb11 = (instruction << 23) & 0x40000000;
+                let immb10_5 = (instruction >> 1) & 0x3F000000;
+                let immb4_1 = (instruction << 12) & 0x00F00000;
+                let imm_ns = (immb12 | immb11 | immb10_5 | immb4_1) as i32;
+                let imm = (imm_ns >> 19) as u32;
+                match funct3 {
+                    0b000 => if self.registers[rs1] == self.registers[rs2] {
+                        next_pc = self.pc.wrapping_add(imm);
+                    },
+                    0b001 => if self.registers[rs1] != self.registers[rs2] {
+                        next_pc = self.pc.wrapping_add(imm);
+                    },
+                    0b100 => if (self.registers[rs1] as i32) < (self.registers[rs2] as i32) {
+                        next_pc = self.pc.wrapping_add(imm);
+                    },
+                    0b101 => if (self.registers[rs1] as i32) >= (self.registers[rs2] as i32) {                        next_pc = self.pc + imm;
+                    },
+                    0b110 => if self.registers[rs1] < self.registers[rs2] {
+                        next_pc = self.pc.wrapping_add(imm);
+                    }
+                    0b111 => if self.registers[rs1] >= self.registers[rs2] {
+                        next_pc = self.pc.wrapping_add(imm);
+                    }
+                    _ => {todo!("Unknown instruction")}
+
+                }
+            }
             103 => {}
             111 => {}
             _ => {todo!("Unknown instruction")}
         }
         self.registers[0] = 0;
+        self.pc = next_pc;
     }
 
     fn memory_save(&mut self, address: u32, value: u32, save_type: u8) {
