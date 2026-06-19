@@ -81,7 +81,19 @@ impl Cpu {
                 let imm = instruction & 0xFFFFF000;
                 self.registers[rd] = imm + self.pc;
             }
-            35 => {}
+            35 => {
+                let imm11_5 = instruction & 0xFE000000;
+                let imm4_0 = (instruction << 13) & 0x01F00000;
+                let imm_ns = (imm11_5 | imm4_0) as i32;
+                let imm = (imm_ns >> 20) as u32;
+                let target = self.registers[rs1].wrapping_add(imm) as usize;
+                match funct3 {
+                    0b000 => self.memory_save(target, self.registers[rs2],0),
+                    0b001 => self.memory_save(target, self.registers[rs2], 1),
+                    0b010 => self.memory_save(target, self.registers[rs2], 2),
+                    _ => {todo!("Unknown instruction")}
+                }
+            }
             // R-type
             51 => match funct3 {
                 0b000 => match funct7 {
@@ -173,8 +185,27 @@ impl Cpu {
         self.pc = next_pc;
     }
 
-    fn memory_save(&mut self, address: u32, value: u32, save_type: u8) {
-        todo!("save");
+    fn memory_save(&mut self, address: usize, value: u32, save_type: u8) {
+        match save_type {
+            0 => self.memory[address] = (value & 0xFF) as u8,
+            1 => {
+                let b0 = (value & 0xFF) as u8;
+                let b1 = ((value & 0xFF00) >> 8)  as u8;
+                self.memory[address] = b0;
+                self.memory[address+1] = b1;
+            }
+            2 => {
+                let b0 = (value & 0xFF) as u8;
+                let b1 = ((value & 0xFF00) >> 8)  as u8;
+                let b2 = ((value & 0xFF0000) >> 16)  as u8;
+                let b3 = ((value & 0xFF000000) >> 24)  as u8;
+                self.memory[address] = b0;
+                self.memory[address+1] = b1;
+                self.memory[address+2] = b2;
+                self.memory[address+3] = b3;
+            }
+            _ => {}
+        }
     }
 
     fn memory_load(&self, address: u32, load_type: u8) -> u32 {
