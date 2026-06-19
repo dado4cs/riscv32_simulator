@@ -148,8 +148,25 @@ impl Cpu {
 
                 }
             }
-            103 => {}
-            111 => {}
+            // jalr
+            103 => if funct3 == 0b000{
+                let imm = ((instruction as i32) >> 20) as u32;
+                next_pc = self.registers[rs1].wrapping_add(imm) & 0xFFFFFFFE;
+                self.registers[rd] = self.pc + 4;
+            } else {
+                todo!("Unknown instruction")
+            },
+            // jal
+            111 => {
+                let imm20 = instruction & 0x80000000;
+                let imm19_12 = (instruction << 11) & 0x7F800000;
+                let imm11 = (instruction << 2) & 0x00400000;
+                let imm10_1 = (instruction >> 9) & 0x003FF000;
+                let imm_ns = (imm20 | imm19_12 | imm11 | imm10_1) as i32;
+                let imm = (imm_ns >> 11) as u32;
+                next_pc = self.pc.wrapping_add(imm);
+                self.registers[rd] = self.pc + 4;
+            }
             _ => {todo!("Unknown instruction")}
         }
         self.registers[0] = 0;
