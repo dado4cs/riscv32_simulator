@@ -47,7 +47,26 @@ impl Cpu {
         let mut next_pc = self.pc + 4;
 
         match op {
-            3 => {}
+            3 => {
+                let imm = ((instruction as i32) >> 20) as u32;
+                let target = self.registers[rs1].wrapping_add(imm) as usize;
+                match funct3 {
+                    // lb
+                    0b000 => self.registers[rd] = self.memory_load(target,0),
+                    // lh
+                    0b001 => self.registers[rd] = self.memory_load(target,1),
+                    // lw
+                    0b010 => self.registers[rd] = self.memory_load(target,2),
+                    // lbu
+                    0b100 => self.registers[rd] = self.memory_load(target,3),
+                    // lhu
+                    0b101 => self.registers[rd] = self.memory_load(target,4),
+                    _ => {todo!("Unknown instruction")}
+
+                }
+
+            },
+                            
             // I-type
             19 => {
                 let imm = ((instruction as i32) >> 20) as u32;
@@ -81,6 +100,7 @@ impl Cpu {
                 let imm = instruction & 0xFFFFF000;
                 self.registers[rd] = imm + self.pc;
             }
+            // S-type
             35 => {
                 let imm11_5 = instruction & 0xFE000000;
                 let imm4_0 = (instruction << 13) & 0x01F00000;
@@ -88,8 +108,11 @@ impl Cpu {
                 let imm = (imm_ns >> 20) as u32;
                 let target = self.registers[rs1].wrapping_add(imm) as usize;
                 match funct3 {
+                    // sb
                     0b000 => self.memory_save(target, self.registers[rs2],0),
+                    // sh
                     0b001 => self.memory_save(target, self.registers[rs2], 1),
+                    // sw
                     0b010 => self.memory_save(target, self.registers[rs2], 2),
                     _ => {todo!("Unknown instruction")}
                 }
@@ -208,7 +231,35 @@ impl Cpu {
         }
     }
 
-    fn memory_load(&self, address: u32, load_type: u8) -> u32 {
-        todo!("load");
+    fn memory_load(&self, address: usize, load_type: u8) -> u32 {
+        match load_type {
+            0 => {
+                let b0 = (self.memory[address] as u32) << 24;
+                ((b0 as i32) >> 24) as u32
+            }
+            1 => {
+                let b0 = self.memory[address] as u32;
+                let b1 = self.memory[address + 1] as u32;
+                let value = (((b1 << 8) | b0) << 16) as i32;
+                (value >> 16) as u32
+            }
+            2 => {
+                let b0 = self.memory[address] as u32;
+                let b1 = self.memory[address + 1] as u32;
+                let b2 = self.memory[address + 2] as u32;
+                let b3 = self.memory[address + 3] as u32;
+                (b3 << 24) | (b2 << 16) | (b1 << 8) | b0
+
+            }
+            3 => {
+                self.memory[address] as u32
+            }
+            4 => {
+                let b0 = self.memory[address] as u32;
+                let b1 = self.memory[address + 1] as u32;
+                (b1 << 8) | b0
+            }
+            _ => {unreachable!()}
+        }
     }
 }
