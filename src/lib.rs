@@ -12,6 +12,7 @@ impl Cpu {
             memory: vec![0; memory_size],
         };
         cpu.registers[0] = 0;
+        cpu.registers[2] = memory_size as u32;
         cpu
     }
     pub fn load_program(&mut self, program: &[u8]) {
@@ -47,6 +48,7 @@ impl Cpu {
         let mut next_pc = self.pc + 4;
 
         match op {
+            // load-instructions
             3 => {
                 let imm = ((instruction as i32) >> 20) as u32;
                 let target = self.registers[rs1].wrapping_add(imm) as usize;
@@ -66,7 +68,6 @@ impl Cpu {
                 }
 
             },
-                            
             // I-type
             19 => {
                 let imm = ((instruction as i32) >> 20) as u32;
@@ -171,7 +172,8 @@ impl Cpu {
                     0b100 => if (self.registers[rs1] as i32) < (self.registers[rs2] as i32) {
                         next_pc = self.pc.wrapping_add(imm);
                     },
-                    0b101 => if (self.registers[rs1] as i32) >= (self.registers[rs2] as i32) {                        next_pc = self.pc + imm;
+                    0b101 => if (self.registers[rs1] as i32) >= (self.registers[rs2] as i32) {
+                        next_pc = self.pc.wrapping_add(imm);
                     },
                     0b110 => if self.registers[rs1] < self.registers[rs2] {
                         next_pc = self.pc.wrapping_add(imm);
@@ -201,6 +203,42 @@ impl Cpu {
                 let imm = (imm_ns >> 11) as u32;
                 next_pc = self.pc.wrapping_add(imm);
                 self.registers[rd] = self.pc + 4;
+            }
+            // priviliged instructions
+            115 => {
+                let imm = ((instruction as i32) >> 20) as u32;
+                match funct3 {
+                    0b000 => match imm {
+                        // ecall
+                        0 => match self.registers[17]{
+                            // print integer
+                            1 => println!("Console: {}",self.registers[10] as i32),
+                            // exit program
+                            93 => {
+                            let exit_code = self.registers[10];
+                            println!("Exit code {}", exit_code);
+                        }
+                            _ => {}
+                        }
+                        // ebreak
+                        1 => {todo!("ebreak")}
+                        
+                        _ => {}
+                    }
+                    // csrrw
+                    0b001 => {todo!("csrrw")}
+                    // csrrs
+                    0b010 => {todo!("csrrs")}
+                    // csrrc
+                    0b011 => {todo!("csrrc")}
+                    // csrrwi
+                    0b101 => {todo!("csrrwi")}
+                    // csrrsi
+                    0b110 => {todo!("csrrsi")}
+                    // csrrci
+                    0b111 => {todo!("csrrci")}
+                    _ => {}
+                }
             }
             _ => {todo!("Unknown instruction")}
         }
