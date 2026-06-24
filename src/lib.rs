@@ -217,6 +217,7 @@ impl Cpu {
                             93 => {
                             let exit_code = self.registers[10];
                             println!("Exit code {}", exit_code);
+                            std::process::exit(exit_code as i32);
                         }
                             _ => {}
                         }
