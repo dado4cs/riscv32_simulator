@@ -17,7 +17,7 @@ export default function RegisterCard({
 
   return (
     <div
-      className={`flex flex-row justify-between items-center p-2 border border-blue-500 font-mono shadow-2xs text-white ${num === 0 ? "bg-blue-950" : "bg-blue-800"}`}
+      className={`flex flex-row justify-between items-center p-2 border rounded-2xl border-blue-500 font-mono shadow-2xs text-white ${num === 0 ? "bg-zinc-800/50" : "bg-zinc-900/40"}`}
     >
       <div className="flex flex-row gap-2 w-24">
         <span className="font-bold">x{num}</span>
@@ -35,7 +35,7 @@ export default function RegisterCard({
           <button
             onClick={onToggle}
             className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${
-              signed ? "bg-indigo-900" : "bg-blue-400"
+              signed ? "bg-emerald-600 hover:bg-emerald-400" : "bg-emerald-800 hover:bg-emerald-700"
             }`}
           >
             <span

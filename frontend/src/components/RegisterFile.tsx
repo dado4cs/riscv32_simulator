@@ -32,21 +32,21 @@ export default function RegisterFile({ registers }: RegisterFileProps) {
   };
 
   return (
-    <div className="flex flex-col gap-4 bg-gray-800 shadow-2xl">
+    <div className="flex flex-col gap-4 bg-gray-800 shadow-2xl rounded-3xl">
       <div className="flex flex-row items-center justify-between p-3 bg-zinc-900 border border-zinc-700 rounded-lg shadow-md">
         <h2 className="text-lg font-bold text-zinc-200 font-mono">Register File</h2>
         <div className="flex gap-3">
           <button
             onClick={setAllSigned}
-            className="px-3 py-1 text-sm bg-indigo-700 text-white font-mono rounded shadow hover:bg-indigo-600 transition-colors cursor-pointer"
+            className="px-3 py-1 text-sm bg-gray-800 text-white font-mono rounded-3xl shadow hover:bg-indigo-600 transition-colors cursor-pointer"
           >
-            Forzar Sig
+            All signed
           </button>
           <button
             onClick={setAllUnsigned}
-            className="px-3 py-1 text-sm bg-blue-600 text-white font-mono rounded shadow hover:bg-blue-500 transition-colors cursor-pointer"
+            className="px-3 py-1 text-sm bg-gray-800 text-white font-mono rounded-3xl shadow hover:bg-indigo-600 transition-colors cursor-pointer"
           >
-            Forzar UnS
+            All unsigned
           </button>
         </div>
       </div>    <div className="grid grid-cols-1 lg:grid-cols-4 gap-2 p-1.5">

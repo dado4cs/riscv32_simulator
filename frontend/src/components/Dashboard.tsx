@@ -26,7 +26,7 @@ export default function Dashboard() {
   }, []);
 
   return (
-    <div className="flex h-screen flex-col justify-between bg-gray-800">
+    <div className="flex h-screen flex-col justify-between bg-gray-950 p-1.5">
       <RegisterFile registers={registers} />
       <Console logs={logs} />
     </div>
