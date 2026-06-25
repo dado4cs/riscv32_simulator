@@ -301,4 +301,10 @@ impl Cpu {
             _ => {unreachable!()}
         }
     }
+    pub fn get_register(&self, register: usize) -> u32 {
+        self.registers[register]
+    }
+    pub fn get_memory_value(&self, address: usize) -> u8{
+        self.memory[address]
+    }
 }
