@@ -18,7 +18,7 @@ export default function RegisterFile({ registers }: RegisterFileProps) {
 
   const toggleSigned = (index: number) => {
     setSigned((prev ) => {
-      const copy = [...prev]; // Regla de inmutabilidad en React
+      const copy = [...prev];
       copy[index] = !copy[index];
       return copy;
     });
@@ -49,7 +49,7 @@ export default function RegisterFile({ registers }: RegisterFileProps) {
             All unsigned
           </button>
         </div>
-      </div>    <div className="grid grid-cols-1 lg:grid-cols-4 gap-2 p-1.5">
+      </div>    <div className="grid grid-rows-8 grid-flow-col gap-2 p-1.5">
       {registers.map((value, idx) => (
         <div key={idx}>
           <RegisterCard

@@ -4,7 +4,7 @@ interface ConsoleLogs {
 
 export default function Console({ logs }: ConsoleLogs) {
   return (
-    <div className="bg-black shadow-2xs h-24 font-mono text-zinc-400 flex flex-col gap-1.5 p-4 overflow-y-auto rounded-lg border border-zinc-600">
+    <div className="bg-black shadow-2xs h-40 font-mono text-zinc-400 flex flex-col gap-1.5 p-4 overflow-y-auto rounded-lg border border-zinc-600">
       {logs.length === 0 ? (
         <span>Waiting for program</span>
       ) : (
