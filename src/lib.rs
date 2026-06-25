@@ -2,7 +2,7 @@ use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
 pub struct Cpu {
-    pc: u32,
+    pub pc: u32,
     registers: [u32; 32],
     memory: Vec<u8>,
     pub is_halted: bool,
