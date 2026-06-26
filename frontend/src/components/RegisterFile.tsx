@@ -32,7 +32,7 @@ export default function RegisterFile({ registers }: RegisterFileProps) {
   };
 
   return (
-    <div className="flex flex-col gap-4 bg-gray-800 shadow-2xl rounded-3xl">
+    <div className="flex flex-col gap-4 bg-zinc-800 shadow-2xl rounded-3xl">
       <div className="flex flex-row items-center justify-between p-3 bg-zinc-900 border border-zinc-700 rounded-lg shadow-md">
         <h2 className="text-lg font-bold text-zinc-200 font-mono">Register File</h2>
         <div className="flex gap-3">

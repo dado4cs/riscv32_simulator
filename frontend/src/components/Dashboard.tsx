@@ -13,6 +13,7 @@ export default function Dashboard() {
   const cpuRef = useRef<Cpu | null>(null);
   const [fileName, setFileName] = useState("No file loaded");
   const [instructions, setInstructions] = useState<string[]>([]);
+  const [lastInstructions, setLastInstructions] = useState<Uint8Array>(new Uint8Array)
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -44,15 +45,30 @@ export default function Dashboard() {
 
   const onRun = () => {};
 
-  const onReset = () => {
+  const hardReset = () => {
     const newCpu = new Cpu(1024 * 4);
     cpuRef.current = newCpu;
-
     setPc(newCpu.pc);
     const regs = new Array(32)
       .fill(0)
       .map((_, i) => cpuRef.current?.get_register(i));
     setRegisters(regs);
+
+    setInstructions([]);
+    setLogs(["[System]: Risc-V-Simulator restarted"])
+
+  };
+
+  const onReset = () => {
+    const newCpu = new Cpu(1024 * 4);
+    newCpu.load_program(lastInstructions);
+    cpuRef.current = newCpu;
+    setPc(newCpu.pc);
+    const regs = new Array(32)
+      .fill(0)
+      .map((_, i) => cpuRef.current?.get_register(i));
+    setRegisters(regs);
+
     setLogs(["[System]: Risc-V-Simulator restarted"])
   };
 
@@ -61,12 +77,13 @@ export default function Dashboard() {
     if (!file || !cpuRef.current) return;
 
     setFileName(file.name);
-    onReset();
+    hardReset();
 
     const reader = new FileReader();
     reader.onload = (event) => {
-      const bytes = new Uint8Array(event.target?.result as ArrayBuffer);
+      const bytes = new Uint8Array(event.target?.result as ArrayBuffer).slice();
       cpuRef.current?.load_program(bytes);
+      setLastInstructions(bytes);
 
       const allInstructions = cpuRef.current?.disassemble_all();
 
