@@ -106,7 +106,7 @@ export default function Dashboard() {
           onReset={() => onReset()}
           onLoadFile={() => fileInputRef.current?.click()}
         />
-        <div className="flex flex-row flex-1 min-h-0 gap-1 p-3">
+        <div className="flex flex-row flex-1 min-h-0 gap-3 p-3">
         <RegisterFile registers={registers} />
           <InstructionsPanel instructions={instructions} current_pc={pc}/>
         </div>

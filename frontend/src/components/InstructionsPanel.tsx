@@ -5,7 +5,7 @@ interface Instructions{
 
 export default function InstructionsPanel({instructions, current_pc} : Instructions){
     return (
-    <div className="bg-zinc-900 shadow-2xs font-mono text-zinc-400 flex flex-1 flex-col gap-1.5 p-4 overflow-y-auto rounded-lg border border-zinc-600">
+    <div className="bg-zinc-900 shadow-2xs font-mono text-zinc-400 flex flex-1 flex-col gap-1.5 p-4 overflow-y-auto rounded-3xl border border-zinc-600">
       {instructions.length === 0 ? (
         <span>Waiting for program</span>
       ) : (
