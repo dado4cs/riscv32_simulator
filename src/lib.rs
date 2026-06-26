@@ -1,4 +1,10 @@
 use wasm_bindgen::prelude::*;
+    const ABI_NAMES: [&str; 32] = [
+    "zero", "ra", "sp", "gp", "tp", "t0", "t1", "t2",
+    "s0", "s1", "a0", "a1", "a2", "a3", "a4", "a5",
+    "a6", "a7", "s2", "s3", "s4", "s5", "s6", "s7",
+    "s8", "s9", "s10", "s11", "t3", "t4", "t5", "t6"
+    ];
 
 #[wasm_bindgen]
 pub struct Cpu {
@@ -231,7 +237,6 @@ impl Cpu {
                         }
                         // ebreak
                         1 => {todo!("ebreak")}
-                        
                         _ => {}
                     }
                     // csrrw
@@ -315,4 +320,162 @@ impl Cpu {
     pub fn get_memory_value(&self, address: usize) -> u8{
         self.memory[address]
     }
+
+
+
+    pub fn disassemble_all(&self) -> Vec<String> {
+        let mut instructions = Vec::new();
+        let mut current_addr = 0;
+
+        while current_addr + 3 < self.memory.len() {
+            let b0 = self.memory[current_addr] as u32;
+            let b1 = self.memory[current_addr + 1] as u32;
+            let b2 = self.memory[current_addr + 2] as u32;
+            let b3 = self.memory[current_addr + 3] as u32;
+            let instruction = b3 << 24 | b2 << 16 | b1 << 8 | b0;
+            let mnemonic = if instruction == 0 {
+                String::from("nop")
+            } else {
+                self.decode_single(instruction)
+            };
+            instructions.push(format!("0x{:04X}: {}", current_addr, mnemonic));
+            current_addr += 4;
+        }
+
+        instructions}
+
+    fn decode_single(&self, instruction: u32) -> String {
+        let op = instruction & 0x7F;
+        let rd = ((instruction >> 7) & 0x1F) as usize;
+        let rs1 = ((instruction >> 15) & 0x1F) as usize;
+        let rs2 = ((instruction >> 20) & 0x1F) as usize;
+        let funct3 = ((instruction >> 12) & 0x7) as u8;
+        let funct7 = ((instruction >> 25) & 0x7F) as u8;
+
+        match op {
+            3 => {
+                let imm = (instruction as i32) >> 20;
+                match funct3 {
+                    0b000 => format!("lb {}, {}({})", ABI_NAMES[rd], imm, ABI_NAMES[rs1]),
+                    0b001 => format!("lh {}, {}({})", ABI_NAMES[rd], imm, ABI_NAMES[rs1]),
+                    0b010 => format!("lw {}, {}({})", ABI_NAMES[rd], imm, ABI_NAMES[rs1]),
+                    0b100 => format!("lbu {}, {}({})", ABI_NAMES[rd], imm, ABI_NAMES[rs1]),
+                    0b101 => format!("lhu {}, {}({})", ABI_NAMES[rd], imm, ABI_NAMES[rs1]),
+                    _ => String::from("unknown load"),
+                }
+            },
+            19 => {
+                let imm = (instruction as i32) >> 20;
+                match funct3 {
+                    0b000 => format!("addi {}, {}, {}", ABI_NAMES[rd], ABI_NAMES[rs1], imm),
+                    0b001 => format!("slli {}, {}, {}", ABI_NAMES[rd], ABI_NAMES[rs1], imm & 0x1F),
+                    0b010 => format!("slti {}, {}, {}", ABI_NAMES[rd], ABI_NAMES[rs1], imm),
+                    0b011 => format!("sltiu {}, {}, {}", ABI_NAMES[rd], ABI_NAMES[rs1], imm),
+                    0b100 => format!("xori {}, {}, {}", ABI_NAMES[rd], ABI_NAMES[rs1], imm),
+                    0b101 => match funct7 {
+                        0x0 => format!("srli {}, {}, {}", ABI_NAMES[rd], ABI_NAMES[rs1], imm & 0x1F),
+                        0x20 => format!("srai {}, {}, {}", ABI_NAMES[rd], ABI_NAMES[rs1], imm & 0x1F),
+                        _ => String::from("unknown shift"),
+                    },
+                    0b110 => format!("ori {}, {}, {}", ABI_NAMES[rd], ABI_NAMES[rs1], imm),
+                    0b111 => format!("andi {}, {}, {}", ABI_NAMES[rd], ABI_NAMES[rs1], imm),
+                    _ => String::from("unknown I-type"),
+                }
+            },
+            23 => {
+                let imm = (instruction & 0xFFFFF000) >> 12;
+                format!("auipc {}, 0x{:X}", ABI_NAMES[rd], imm)
+            },
+            35 => {
+                let imm11_5 = instruction & 0xFE000000;
+                let imm4_0 = (instruction << 13) & 0x01F00000;
+                let imm_ns = (imm11_5 | imm4_0) as i32;
+                let imm = imm_ns >> 20;
+                match funct3 {
+                    0b000 => format!("sb {}, {}({})", ABI_NAMES[rs2], imm, ABI_NAMES[rs1]),
+                    0b001 => format!("sh {}, {}({})", ABI_NAMES[rs2], imm, ABI_NAMES[rs1]),
+                    0b010 => format!("sw {}, {}({})", ABI_NAMES[rs2], imm, ABI_NAMES[rs1]),
+                    _ => String::from("unknown S-type"),
+                }
+            },
+            51 => {
+                match funct3 {
+                    0b000 => match funct7 {
+                        0x0 => format!("add {}, {}, {}", ABI_NAMES[rd], ABI_NAMES[rs1], ABI_NAMES[rs2]),
+                        0x20 => format!("sub {}, {}, {}", ABI_NAMES[rd], ABI_NAMES[rs1], ABI_NAMES[rs2]),
+                        _ => String::from("unknown R-type add/sub"),
+                    },
+                    0b001 => format!("sll {}, {}, {}", ABI_NAMES[rd], ABI_NAMES[rs1], ABI_NAMES[rs2]),
+                    0b010 => format!("slt {}, {}, {}", ABI_NAMES[rd], ABI_NAMES[rs1], ABI_NAMES[rs2]),
+                    0b011 => format!("sltu {}, {}, {}", ABI_NAMES[rd], ABI_NAMES[rs1], ABI_NAMES[rs2]),
+                    0b100 => format!("xor {}, {}, {}", ABI_NAMES[rd], ABI_NAMES[rs1], ABI_NAMES[rs2]),
+                    0b101 => match funct7 {
+                        0x0 => format!("srl {}, {}, {}", ABI_NAMES[rd], ABI_NAMES[rs1], ABI_NAMES[rs2]),
+                        0x20 => format!("sra {}, {}, {}", ABI_NAMES[rd], ABI_NAMES[rs1], ABI_NAMES[rs2]),
+                        _ => String::from("unknown R-type shift"),
+                    },
+                    0b110 => format!("or {}, {}, {}", ABI_NAMES[rd], ABI_NAMES[rs1], ABI_NAMES[rs2]),
+                    0b111 => format!("and {}, {}, {}", ABI_NAMES[rd], ABI_NAMES[rs1], ABI_NAMES[rs2]),
+                    _ => String::from("unknown R-type"),
+                }
+            },
+            55 => {
+                let imm = (instruction & 0xFFFFF000) >> 12;
+                format!("lui {}, 0x{:X}", ABI_NAMES[rd], imm)
+            },
+            99 => {
+                let immb12 = instruction & 0x80000000;
+                let immb11 = (instruction << 23) & 0x40000000;
+                let immb10_5 = (instruction >> 1) & 0x3F000000;
+                let immb4_1 = (instruction << 12) & 0x00F00000;
+                let imm_ns = (immb12 | immb11 | immb10_5 | immb4_1) as i32;
+                let imm = imm_ns >> 19;
+                match funct3 {
+                    0b000 => format!("beq {}, {}, {}", ABI_NAMES[rs1], ABI_NAMES[rs2], imm),
+                    0b001 => format!("bne {}, {}, {}", ABI_NAMES[rs1], ABI_NAMES[rs2], imm),
+                    0b100 => format!("blt {}, {}, {}", ABI_NAMES[rs1], ABI_NAMES[rs2], imm),
+                    0b101 => format!("bge {}, {}, {}", ABI_NAMES[rs1], ABI_NAMES[rs2], imm),
+                    0b110 => format!("bltu {}, {}, {}", ABI_NAMES[rs1], ABI_NAMES[rs2], imm),
+                    0b111 => format!("bgeu {}, {}, {}", ABI_NAMES[rs1], ABI_NAMES[rs2], imm),
+                    _ => String::from("unknown B-type"),
+                }
+            },
+            103 => {
+                if funct3 == 0b000 {
+                    let imm = (instruction as i32) >> 20;
+                    format!("jalr {}, {}({})", ABI_NAMES[rd], imm, ABI_NAMES[rs1])
+                } else {
+                    String::from("unknown jalr")
+                }
+            },
+            111 => {
+                let imm20 = instruction & 0x80000000;
+                let imm19_12 = (instruction << 11) & 0x7F800000;
+                let imm11 = (instruction << 2) & 0x00400000;
+                let imm10_1 = (instruction >> 9) & 0x003FF000;
+                let imm_ns = (imm20 | imm19_12 | imm11 | imm10_1) as i32;
+                let imm = imm_ns >> 11;
+                format!("jal {}, {}", ABI_NAMES[rd], imm)
+            },
+            115 => {
+                let imm = (instruction as i32) >> 20;
+                match funct3 {
+                    0b000 => match imm {
+                        0 => String::from("ecall"),
+                        1 => String::from("ebreak"),
+                        _ => String::from("unknown system"),
+                    },
+                    0b001 => String::from("csrrw"),
+                    0b010 => String::from("csrrs"),
+                    0b011 => String::from("csrrc"),
+                    0b101 => String::from("csrrwi"),
+                    0b110 => String::from("csrrsi"),
+                    0b111 => String::from("csrrci"),
+                    _ => String::from("unknown CSR"),
+                }
+            },
+            _ => format!("Unknown Opcode: 0x{:X}", op),
+        }
+    }
 }
+
