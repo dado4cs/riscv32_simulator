@@ -3,6 +3,7 @@ import init, { Cpu } from "risc_v_simulator";
 import RegisterFile from "./RegisterFile";
 import Console from "./Console";
 import ControlPanel from "./ControlPanel";
+import InstructionsPanel from "./InstructionsPanel";
 
 export default function Dashboard() {
   const [cpuReady, SetCpuReady] = useState<boolean>(false);
@@ -11,6 +12,7 @@ export default function Dashboard() {
   const [pc, setPc] = useState(0);
   const cpuRef = useRef<Cpu | null>(null);
   const [fileName, setFileName] = useState("No file loaded");
+  const [instructions, setInstructions] = useState<string[]>([]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -65,6 +67,13 @@ export default function Dashboard() {
     reader.onload = (event) => {
       const bytes = new Uint8Array(event.target?.result as ArrayBuffer);
       cpuRef.current?.load_program(bytes);
+
+      const allInstructions = cpuRef.current?.disassemble_all();
+
+      if(allInstructions) {
+        setInstructions(allInstructions);
+      }
+
       setLogs((prev) => [
         ...prev,
         `[System]: '${file.name}' loaded (${bytes.length} bytes).`,
@@ -97,7 +106,10 @@ export default function Dashboard() {
           onReset={() => onReset()}
           onLoadFile={() => fileInputRef.current?.click()}
         />
+        <div className="flex flex-row flex-1 min-h-0 gap-1 p-3">
         <RegisterFile registers={registers} />
+          <InstructionsPanel instructions={instructions} current_pc={pc}/>
+        </div>
         <Console logs={logs} />
       </div>
     </>
