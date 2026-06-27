@@ -4,6 +4,7 @@ import RegisterFile from "./RegisterFile";
 import Console from "./Console";
 import ControlPanel from "./ControlPanel";
 import InstructionsPanel from "./InstructionsPanel";
+import MemoryPanel from "./MemoryPanel";
 
 export default function Dashboard() {
   const [cpuReady, SetCpuReady] = useState<boolean>(false);
@@ -48,6 +49,13 @@ export default function Dashboard() {
   };
 
   const onRun = () => {};
+
+  const handleReadMemory = (addr: number) : number | null => {
+    if (!cpuRef.current) return null;
+    if(addr < 0 || addr >= 4096) return null;
+
+    return cpuRef.current.get_memory_value(addr);
+  }
 
   const hardReset = () => {
     const newCpu = new Cpu(1024 * 4);
@@ -131,7 +139,14 @@ export default function Dashboard() {
         <RegisterFile registers={registers} />
           <InstructionsPanel instructions={instructions} current_pc={pc}/>
         </div>
-        <Console logs={logs} />
+        <div className="flex flex-row gap-3 p-3 pt-0">
+          <div className="flex-1">
+            <Console logs={logs} />
+          </div>
+          <div className="w-80">
+            <MemoryPanel onReadMemory={handleReadMemory} />
+          </div>
+        </div>
       </div>
     </>
   );

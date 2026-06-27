@@ -267,6 +267,11 @@ impl Cpu {
 
 
     fn memory_save(&mut self, address: usize, value: u32, save_type: u8) {
+        if address + 3 >= self.memory.len() {
+            self.is_halted = true;
+            return;
+        }
+
         match save_type {
             0 => self.memory[address] = (value & 0xFF) as u8,
             1 => {
@@ -290,6 +295,9 @@ impl Cpu {
     }
 
     fn memory_load(&self, address: usize, load_type: u8) -> u32 {
+        if address + 3 >= self.memory.len() {
+            return 0;
+        }
         match load_type {
             0 => {
                 let b0 = (self.memory[address] as u32) << 24;
