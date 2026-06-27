@@ -1,15 +1,22 @@
+use wasm_bindgen::prelude::*;
+
+#[wasm_bindgen]
 pub struct Cpu {
     pub pc: u32,
-    pub registers: [u32; 32],
-    pub memory: Vec<u8>,
+    registers: [u32; 32],
+    memory: Vec<u8>,
+    pub is_halted: bool,
 }
 
+#[wasm_bindgen]
 impl Cpu {
+    #[wasm_bindgen(constructor)]
     pub fn new(memory_size: usize) -> Self {
         let mut cpu = Cpu {
             pc: 0,
             registers: [0; 32],
             memory: vec![0; memory_size],
+            is_halted: false,
         };
         cpu.registers[0] = 0;
         cpu.registers[2] = memory_size as u32;
@@ -24,6 +31,8 @@ impl Cpu {
     }
 
     pub fn step(&mut self) {
+        if self.is_halted {return; }
+
         let instruction = self.fetch();
         self.decode_and_execute(instruction);
     }
@@ -216,8 +225,7 @@ impl Cpu {
                             // exit program
                             93 => {
                             let exit_code = self.registers[10];
-                            println!("Exit code {}", exit_code);
-                            std::process::exit(exit_code as i32);
+                            self.is_halted = true;
                         }
                             _ => {}
                         }
