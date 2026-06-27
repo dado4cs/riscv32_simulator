@@ -31,13 +31,17 @@ export default function Dashboard() {
   }, []);
 
   const onStep = () => {
-    cpuRef.current?.step();
+    const possibleLog = cpuRef.current?.step();
     setPc(cpuRef.current?.pc ?? 0);
     const regs = new Array(32)
       .fill(0)
       .map((_, i) => cpuRef.current?.get_register(i) ?? 0);
 
     setRegisters(regs);
+
+    if(possibleLog){
+      setLogs((prev)=> [...prev, `[ECALL] ${possibleLog}`]);
+    }
   };
 
   const onRun = () => {};

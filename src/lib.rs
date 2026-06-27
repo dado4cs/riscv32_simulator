@@ -30,11 +30,11 @@ impl Cpu {
         }
     }
 
-    pub fn step(&mut self) {
-        if self.is_halted {return; }
+    pub fn step(&mut self) -> Option<String> {
+        if self.is_halted {return None;}
 
         let instruction = self.fetch();
-        self.decode_and_execute(instruction);
+        self.decode_and_execute(instruction)
     }
 
     fn fetch(&self) -> u32 {
@@ -47,7 +47,7 @@ impl Cpu {
         b3 << 24 | b2 << 16 | b1 << 8 | b0
     }
 
-    fn decode_and_execute(&mut self, instruction: u32) {
+    fn decode_and_execute(&mut self, instruction: u32) -> Option<String> {
         let op = instruction & 0x7F;
         let rd = ((instruction >> 7) & 0x1F) as usize;
         let rs1 = ((instruction >> 15) & 0x1F) as usize;
@@ -55,6 +55,7 @@ impl Cpu {
         let funct3 = ((instruction >> 12) & 0x7) as u8;
         let funct7 = ((instruction >> 25) & 0x7F) as u8;
         let mut next_pc = self.pc + 4;
+        let mut log_message: Option<String> = None;
 
         match op {
             // load-instructions
@@ -221,12 +222,15 @@ impl Cpu {
                         // ecall
                         0 => match self.registers[17]{
                             // print integer
-                            1 => println!("Console: {}",self.registers[10] as i32),
+                            1 => {
+                                log_message = Some(format!("Console: {}", self.registers[10] as i32));
+                            }
                             // exit program
                             93 => {
-                            let exit_code = self.registers[10];
-                            self.is_halted = true;
-                        }
+                                let exit_code = self.registers[10];
+                                self.is_halted = true;
+                                log_message = Some(format!("Program exited with code: {}", exit_code));
+                            }
                             _ => {}
                         }
                         // ebreak
@@ -253,7 +257,9 @@ impl Cpu {
         }
         self.registers[0] = 0;
         self.pc = next_pc;
+        log_message
     }
+
 
     fn memory_save(&mut self, address: usize, value: u32, save_type: u8) {
         match save_type {
